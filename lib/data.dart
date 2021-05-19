@@ -7,11 +7,11 @@ class AppData {
 
   static List<Category> categoryList = [
     Category(),
-    Category(id: 1, name: "سيارات و  آليات", image: 'assets/cars.png'),
+    Category(id: 1, name: "سيارات و آليات", image: 'assets/cars.png'),
     Category(id: 2, name: "عقارات", image: 'assets/realestate.png'),
     Category(id: 3, name: "ازياء موضة تجميل", image: 'assets/fashion.png'),
     Category(id: 4, name: "الكترونيات", image: 'assets/electronics.png'),
-    Category(id: 5, name: "موبايل تابليت", image: 'assets/mobile.png'),
+    Category(id: 5, name: "موبايلات", image: 'assets/mobile.png'),
     Category(id: 6, name: "فرص عمل", image: 'assets/job.png'),
     Category(id: 7, name: "خدمات", image: 'assets/services.png'),
     Category(id: 8, name: "مطاعم", image: 'assets/food.png'),

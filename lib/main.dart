@@ -2,24 +2,26 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
-
+import 'package:bazarliveflutter/category.dart';
 import 'package:bazarliveflutter/product_icon.dart';
 import 'package:bazarliveflutter/themes/light_color.dart';
 import 'package:bazarliveflutter/themes/theme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:mysql1/mysql1.dart' as mysqcon;
 import 'BottomNavigationBar/bottom_navigation_bar.dart';
+import 'Globs.dart';
 import 'data.dart';
 import 'datatransaction.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'def_classes.dart';
-import 'extentions.dart';
-// @dart=2.9
-void main() {
+import 'ind_add_C001.dart';
+
+// ignore: import_of_legacy_library_into_null_safe
+void main()  {
   //_get_perms();
 // get_im_locs();
+
   runApp(MyApp());
 
  /* Future<void> _log(String log) async {
@@ -71,6 +73,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+
       title: 'Bazar Live بازر لايف',
       theme: ThemeData(fontFamily: 'Cairo',
         // This is the theme of your application.
@@ -109,10 +112,21 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-    List<Advs> lst =[];
-  bool isHomePageSelected = true;
 
-  List<Uint8List> lstim=[];
+
+  /*String host ="sql6.freemysqlhosting.net";
+    int port =3306;
+    String user ="sql6411181";
+    String password ="vHRQdWMTlS";
+    String db ="sql6411181";-*/
+  // conn0 = await mysqcon.MySqlConnection.connect(mysqcon.ConnectionSettings(
+  //    host: 'MYSQL5044.site4now.net', port: 3306, user: 'a7231a_bazarli',password: 'A1c3e5g7i9l11', db: 'db_a7231a_bazarli'));
+  var sett = new  mysqcon.ConnectionSettings(
+      host: host,
+      port: port,
+      user: user,
+      password: password,
+      db: db);
 
 
 
@@ -173,7 +187,7 @@ class _MyHomePageState extends State<MyHomePage> {
         SingleChildScrollView(scrollDirection: Axis.horizontal,reverse: true,
           child:Add_loader()),
             Positioned(
-              bottom: 0,
+              top: 0,
               right: 0,
               child: CustomBottomNavigationBar(
                 onIconPresedCallback: onBottomIconPressed
@@ -224,72 +238,148 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
   // ignore: non_constant_identifier_names
- Future get_single_user() async{
-   final   conn;
-try{
-     conn = await mysqcon.MySqlConnection.connect(mysqcon.ConnectionSettings(
-      host: 'MYSQL5044.site4now.net', port: 3306, user: 'a7231a_bazarli',password: 'A1c3e5g7i9l11', db: 'db_a7231a_bazarli'));
-  print('xxfxx');
 
-
-    Qry Q =  await Qry(conn);
-
-    String uid ='07485dc1-f4e6-46ab-bc6a-01fc837877b5';
-    // var t =  Q.get_user(uid);
-
-   int N = 16;
-   mysqcon.Results res2 = await conn.query('SELECT * FROM `adds` order by id desc limit ' + N.toString());
-   // var q =await res.elementAt(0).values.elementAt(2);
-   // var q2 =await res2.elementAt(0).values.elementAt(0);
-//if(lst.length>0){lst.clear();}
-  lst.clear();
-   mysqcon.Results res;
-    for(var q=0;q<15;q++) {
-
-      lst.add(await Advs.fromMap(res2
-          .elementAt(q)
-          .fields) );
-      print('lodaed ad' + q.toString());
-    }
-
-     for(var q=0;q<15;q++) {
-
-       res = await conn.query('SELECT * FROM `images_db` WHERE `name` LIKE \"'+ lst.elementAt(q).id +'%\"' );
-       var xres=   await Base64Codec().decode(res.elementAt(0).values.elementAt(1).toString() );
-       try{      lst.elementAt(q).images.add( await xres);
-       }catch(er){
-         print(er);
-       }
-
-       print('added image index: ' + q.toString());
-      /* final Uint8List xf = await Q.down_im(lst
-           .elementAt(q)
-           .id);
-       if (xf == null) {
-         lstim.add(await list);
-       } else {
-         lstim.add(await xf);
-       }*/
-     }
-}catch(rz){
-print('eer sq :' +rz.toString());
-}
-
-      print("loaded " + lst.length.toString() + ' items');
-
-
-
-
-
-return lst;
-    //Q.disconnect();
-//return res2;
-    //  print('tata ' + Ad.desc.toString());
-//Buser US = new Buser.fromMap(res.elementAt(0).fields);
-    //String x =await "";
-    //Q.disconnect();
-  }
   Widget Add_loader()  {
+
+    return  Container(
+        margin: EdgeInsets.symmetric(vertical: 10),
+        width: AppTheme.fullWidth(context),
+        height: AppTheme.fullHeight(context) -312,
+        child :    FutureBuilder    (
+            future:  Load_cat_divided_adds(),
+            builder: (ctx , snap) {
+              if(snap.connectionState==ConnectionState.waiting){
+                return  Center(child: Image.asset('assets/download.gif'));
+              }
+              else{
+              return   SizedBox(
+
+              width: AppTheme.fullHeight(context),child: Directionality(
+
+                  textDirection: TextDirection.rtl,
+                  child: Expanded(child: Column(children: [face_line_loader(snap,ctx,conn0)],))
+              ));}
+            }))
+    ;
+  }
+  Widget Cat_tit(Category Cat){
+    return SizedBox(height: 30,child: Row(children: [
+        Image.asset(Cat.image),Text(
+        Cat.name,
+          style: TextStyle(height: 1.2, fontSize: 10))
+    ]));
+  }
+  Widget face_line_loader(snap,ctx,conn0){
+    return Align(alignment: Alignment.centerRight,child: Column(
+
+        children :  [SizedBox(
+       height: AppTheme.fullHeight(context)-312,
+      width: AppTheme.fullWidth(context)-1,
+      child:  ListView.builder(
+
+          scrollDirection: Axis.vertical,
+          reverse: false,
+          itemCount: 9,
+          itemBuilder: (qs, i)
+          {
+            return Column(children:[Cat_tit( categoryList[i+1]),
+             Cat_line_loader(snap,i,ctx,conn0)]);
+          }
+      ))]));
+      /*    Cat_line_loader(snap,4,ctx),
+      Cat_line_loader(snap,5,ctx),
+      Cat_line_loader(snap,6,ctx),
+      Cat_line_loader(snap,7,ctx),
+      Cat_line_loader(snap,8,ctx),
+      Cat_line_loader(snap,9,ctx)*/
+
+
+    //],);
+
+  }
+
+  Widget Cat_line_loader(snap,ii,ctx,coni){
+    var qs = ctx;
+    List<List<Advs>> zee = snap.data as List<List<Advs>>;
+    if(rets[ii]==true){
+    return lvs[ii];
+    }else{
+    return  FutureBuilder    (
+        future:  Load_cat_image_adds(zee.elementAt(ii), coni),
+        builder: (ctx , snap2)  {
+          if(snap2.connectionState==ConnectionState.waiting){
+            return  Center(child: Image.asset('assets/download.gif'));
+          }
+          else{
+            rets[ii]=true;
+            lvs.add(new Text("zee"));
+            return lvs[ii]= SizedBox(
+              width:1800,
+height: 262,
+      child: new  ListView.builder(
+
+    scrollDirection: Axis.horizontal,
+      reverse: false,
+      itemCount: 4,
+      itemBuilder: (qs, i)
+      {
+      
+        String ex =zee.elementAt(ii).elementAt(i).title;
+
+        
+                List Xim =snap2.data as List;
+                return GestureDetector(
+                  onTap: () {
+                    Curaddid =zee.elementAt(ii).elementAt(i).id;
+                    CAdd=zee.elementAt(ii).elementAt(i);
+
+                    Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Ind_add_root()),) ;
+                    }
+                  ,
+                  child:
+                  Card(
+
+                    child: SizedBox(
+                        height: 340.0,
+                        child :Column(children: [Image.memory(Xim.elementAt(i) , errorBuilder:
+                            (context, error, stackTrace) {
+                          return Image.asset(
+                              'assets/icon.png',
+                              fit: BoxFit.fitWidth);
+                        },width: 200,height: 200,fit: BoxFit.contain ,), Align(
+
+                            alignment: Alignment.bottomCenter,
+                            child: Text(
+                              "${ex}".substring(0,min(17,"${ex}".length)),textScaleFactor: 1,softWrap: true,maxLines: 2,
+                            )
+                        )])
+
+
+
+                    )));
+
+      }));
+
+          }});}
+           
+
+
+        //  onTap: () => MaterialPageRoute(
+        /*  builder: (context) =>
+              SecondRoute(id: _data.getId(index), name: _data.getName(index))),
+    );
+    ////*
+
+    *//*
+         */
+         */
+
+      }
+ 
+  
+ /* Widget Add_loader()  {
 
     return  Container(
         margin: EdgeInsets.symmetric(vertical: 10),
@@ -349,7 +439,7 @@ String ex =zee.elementAt(i).title;
               ));
             }))
     ;
-  }
+  }*/
  /* Widget _itemBuilder(BuildContext context, int index) {
     String ex ="XX";
 
@@ -398,7 +488,7 @@ String ex =zee.elementAt(i).title;
     return Container(
       margin: EdgeInsets.symmetric(vertical: 10),
       width: AppTheme.fullWidth(context),
-      height: 80,
+      height: 50,
 
       child: ListView(
         reverse: true,
@@ -428,5 +518,335 @@ String ex =zee.elementAt(i).title;
       ),
     );
   }
+  Future get_single_user() async{
+    final   conn;
+    try{
+      conn = await mysqcon.MySqlConnection.connect(mysqcon.ConnectionSettings(
+          host: 'MYSQL5044.site4now.net', port: 3306, user: 'a7231a_bazarli',password: 'A1c3e5g7i9l11', db: 'db_a7231a_bazarli'));
+      print('xxfxx');
+
+
+      Qry Q =  await Qry(conn);
+
+      String uid ='07485dc1-f4e6-46ab-bc6a-01fc837877b5';
+      // var t =  Q.get_user(uid);
+
+      int N = 16;
+      mysqcon.Results res2 = await conn.query('SELECT * FROM `adds` order by id desc limit ' + N.toString());
+      // var q =await res.elementAt(0).values.elementAt(2);
+      // var q2 =await res2.elementAt(0).values.elementAt(0);
+//if(lst.length>0){lst.clear();}
+      lst.clear();
+      mysqcon.Results res;
+      for(var q=0;q<15;q++) {
+
+        lst.add(await Advs.fromMap(res2
+            .elementAt(q)
+            .fields) );
+        print('lodaed ad' + q.toString());
+      }
+
+      for(var q=0;q<15;q++) {
+
+        res = await conn.query('SELECT * FROM `images_db` WHERE `name` LIKE \"'+ lst.elementAt(q).id +'%\"' );
+        var xres=   await Base64Codec().decode(res.elementAt(0).values!.elementAt(1).toString() );
+        try{      lst.elementAt(q).images.add( await xres);
+        }catch(er){
+          print(er);
+        }
+
+        print('added image index: ' + q.toString());
+        /* final Uint8List xf = await Q.down_im(lst
+           .elementAt(q)
+           .id);
+       if (xf == null) {
+         lstim.add(await list);
+       } else {
+         lstim.add(await xf);
+       }*/
+      }
+    }catch(rz){
+      print('eer sq :' +rz.toString());
+    }
+
+    print("loaded " + lst.length.toString() + ' items');
+
+
+
+
+
+    return lst;
+    //Q.disconnect();
+//return res2;
+    //  print('tata ' + Ad.desc.toString());
+//Buser US = new Buser.fromMap(res.elementAt(0).fields);
+    //String x =await "";
+    //Q.disconnect();
+  }
+
+
+  // ignore: non_constant_identifier_names
+  Future Load_cat_divided_adds() async{
+    tot_cat=[];
+   String host ="mysql5044.site4now.net";
+    int port =3306;
+    String user ="a7231a_bazarli";
+    String password ="A1c3e5g7i9l11";
+    String db ="db_a7231a_bazarli";
+    /*String host ="sql6.freemysqlhosting.net";
+    int port =3306;
+    String user ="sql6411181";
+    String password ="vHRQdWMTlS";
+    String db ="sql6411181";-*/
+   // conn0 = await mysqcon.MySqlConnection.connect(mysqcon.ConnectionSettings(
+    //    host: 'MYSQL5044.site4now.net', port: 3306, user: 'a7231a_bazarli',password: 'A1c3e5g7i9l11', db: 'db_a7231a_bazarli'));
+   var sett = new  mysqcon.ConnectionSettings(
+        host: host,
+        port: port,
+        user: user,
+        password: password,
+        db: db);
+   try{
+
+    conn0 =await mysqcon.MySqlConnection.connect(sett);}catch(t){
+     print('Zee :Server Connected' + t.toString());
+   }
+
+
+    try{
+
+
+      List<String> CL = ["سيارات و آليات", "عقارات", "أزياء - موضة - تجميل", "الكترونيات", "موبايلات", "فرص عمل", "خدمات", "مطاعم", "اثاث", "العاب"];
+
+
+      List<mysqcon.Results> LQ =[];
+     for (String C in  CL){
+       mysqcon.Results qres = await conn0!.query('SELECT * FROM `adds` WHERE `Mcat`LIKE \"'+ C+'\" ORDER BY `rank` LIMIT 5');
+       LQ.add( qres );
+
+     }
+     List<Advs> temp_lad =[];
+for (int y=0;y<9;y++){
+  mysqcon.Results Xres =LQ.elementAt(y);
+  temp_lad=[];
+ for (int z=0 ; z<4;z++){
+
+
+    var Xres2 =Xres.toList().elementAt(z).fields;
+Advs AD =(await Advs.fromMap(Xres2));
+
+    print('Zee :lodaed ad /' + y.toString() +'/ / ' + z.toString());
+
+  /*  mysqcon.Results  res = await conn0!.query('SELECT * FROM `images_db` WHERE `name` LIKE \"'+ AD.id +'%\"' );
+    var xres=   await Base64Codec().decode(res.elementAt(0).values!.elementAt(1).toString() );
+    try{
+     AD.images.add( await xres);
+     // tot_cat[y].elementAt(z).images.add( await xres);
+    print('added image index: ' + ((y+1)*(z+1)).toString());
+    }catch(er){
+      print(er);
+    }*/
+    temp_lad.add(AD);
 
 }
+  tot_cat.add(temp_lad);
+}
+    }catch(rz){
+      print('eer sq :' +rz.toString());
+    }
+
+    //  mysqcon.Results res2 = await conn.query('SELECT * FROM `adds` order by id desc limit ' + N.toString());
+      // var q =await res.elementAt(0).values.elementAt(2);
+      // var q2 =await res2.elementAt(0).values.elementAt(0);
+//if(lst.length>0){lst.clear();}
+     // lst.clear();
+
+    /*  mysqcon.Results res;
+      for(var q=0;q<15;q++) {
+
+        lst.add(await Advs.fromMap(res2
+            .elementAt(q)
+            .fields) );
+        print('lodaed ad' + q.toString());
+      }*/
+
+  /*    for(var q=0;q<15;q++) {
+
+        res = await conn.query('SELECT * FROM `images_db` WHERE `name` LIKE \"'+ lst.elementAt(q).id +'%\"' );
+        var xres=   await Base64Codec().decode(res.elementAt(0).values.elementAt(1).toString() );
+        try{      lst.elementAt(q).images.add( await xres);
+        }catch(er){
+          print(er);
+        }
+
+        print('added image index: ' + q.toString());
+        /* final Uint8List xf = await Q.down_im(lst
+           .elementAt(q)
+           .id);
+       if (xf == null) {
+         lstim.add(await list);
+       } else {
+         lstim.add(await xf);
+       }*/
+      }
+    }catch(rz){
+      print('eer sq :' +rz.toString());
+    }*/
+
+    print("loaded " + lst.length.toString() + ' items');
+
+
+
+
+
+    return tot_cat;
+    //Q.disconnect();
+//return res2;
+    //  print('tata ' + Ad.desc.toString());
+//Buser US = new Buser.fromMap(res.elementAt(0).fields);
+    //String x =await "";
+    //Q.disconnect();
+  }
+  Future Load_cat_image_adds(List<Advs> Addid,mysqcon.MySqlConnection? coni ) async{
+    /*mysqcon.MySqlConnection? conn0  ;
+    String host ="mysql5044.site4now.net";
+    int port =3306;
+    String user ="a7231a_bazarli";
+    String password ="A1c3e5g7i9l11";
+    String db ="db_a7231a_bazarli";*/
+    /*String host ="sql6.freemysqlhosting.net";
+    int port =3306;
+    String user ="sql6411181";
+    String password ="vHRQdWMTlS";
+    String db ="sql6411181";-*/
+    // conn0 = await mysqcon.MySqlConnection.connect(mysqcon.ConnectionSettings(
+    //    host: 'MYSQL5044.site4now.net', port: 3306, user: 'a7231a_bazarli',password: 'A1c3e5g7i9l11', db: 'db_a7231a_bazarli'));
+   /* var sett = new  mysqcon.ConnectionSettings(
+        host: host,
+        port: port,
+        user: user,
+        password: password,
+        db: db);
+    try{
+
+      conn0 =await mysqcon.MySqlConnection.connect(sett);}catch(t){
+      print('Zee :Server Connected' + t.toString());
+    }*/
+
+   // try{
+
+
+    //  List<String> CL = ["سيارات و آليات", "عقارات", "أزياء - موضة - تجميل", "الكترونيات", "موبايلات", "فرص عمل", "خدمات", "مطاعم", "اثاث", "العاب"];
+
+
+    //  List<mysqcon.Results> LQ =[];
+    /*  for (String C in  CL){
+        mysqcon.Results qres = await conn0!.query('SELECT * FROM `adds` WHERE `Mcat`LIKE \"'+ C+'\" ORDER BY `rank` LIMIT 5');
+        LQ.add( qres );
+
+      }*/
+      /*List<Advs> temp_lad =[];
+      for (int y=0;y<9;y++){
+        mysqcon.Results Xres =LQ.elementAt(y);
+        temp_lad=[];
+        for (int z=0 ; z<4;z++){
+
+
+          var Xres2 =Xres.toList().elementAt(z).fields;
+          Advs AD =(await Advs.fromMap(Xres2));
+
+          print('Zee :lodaed ad /' + y.toString() +'/ / ' + z.toString());*/
+    List ims =[];
+for(int tt =0;tt<4;tt++){
+  mysqcon.Results  res = await coni!.query('SELECT * FROM `images_db` WHERE `name` LIKE \"'+ Addid.elementAt(tt).id +'%\"' );
+var xres=   await Base64Codec().decode(res.elementAt(0).values!.elementAt(1).toString() );
+ims.add(xres);
+}
+        
+          print("lodaed image :" + Addid.elementAt(0).id.toString());
+     /*     try{
+            AD.images.add( await xres);
+            // tot_cat[y].elementAt(z).images.add( await xres);
+            print('added image index: ' + ((y+1)*(z+1)).toString());
+          }catch(er){
+            print(er);
+          }
+          temp_lad.add(AD);
+
+        }
+        tot_cat.add(temp_lad);
+      }
+    }catch(rz){
+      print('eer sq :' +rz.toString());
+    }*/
+
+    //  mysqcon.Results res2 = await conn.query('SELECT * FROM `adds` order by id desc limit ' + N.toString());
+    // var q =await res.elementAt(0).values.elementAt(2);
+    // var q2 =await res2.elementAt(0).values.elementAt(0);
+//if(lst.length>0){lst.clear();}
+    // lst.clear();
+
+    /*  mysqcon.Results res;
+      for(var q=0;q<15;q++) {
+
+        lst.add(await Advs.fromMap(res2
+            .elementAt(q)
+            .fields) );
+        print('lodaed ad' + q.toString());
+      }*/
+
+    /*    for(var q=0;q<15;q++) {
+
+        res = await conn.query('SELECT * FROM `images_db` WHERE `name` LIKE \"'+ lst.elementAt(q).id +'%\"' );
+        var xres=   await Base64Codec().decode(res.elementAt(0).values.elementAt(1).toString() );
+        try{      lst.elementAt(q).images.add( await xres);
+        }catch(er){
+          print(er);
+        }
+
+        print('added image index: ' + q.toString());
+        /* final Uint8List xf = await Q.down_im(lst
+           .elementAt(q)
+           .id);
+       if (xf == null) {
+         lstim.add(await list);
+       } else {
+         lstim.add(await xf);
+       }*/
+      }
+    }catch(rz){
+      print('eer sq :' +rz.toString());
+    }*/
+
+    print("loaded " + lst.length.toString() + ' items');
+
+
+
+
+
+    return ims;
+    //Q.disconnect();
+//return res2;
+    //  print('tata ' + Ad.desc.toString());
+//Buser US = new Buser.fromMap(res.elementAt(0).fields);
+    //String x =await "";
+    //Q.disconnect();
+  }
+  static List<Category> categoryList = [
+    Category(),
+    Category(id: 1, name: "سيارات و آليات", image: 'assets/cars.png'),
+    Category(id: 2, name: "عقارات", image: 'assets/realestate.png'),
+    Category(id: 3, name: "ازياء موضة تجميل", image: 'assets/fashion.png'),
+    Category(id: 4, name: "الكترونيات", image: 'assets/electronics.png'),
+    Category(id: 5, name: "موبايلات", image: 'assets/mobile.png'),
+    Category(id: 6, name: "فرص عمل", image: 'assets/job.png'),
+    Category(id: 7, name: "خدمات", image: 'assets/services.png'),
+    Category(id: 8, name: "مطاعم", image: 'assets/food.png'),
+    Category(id: 9, name: "اثاث", image: 'assets/furniture.png'),
+    Category(id: 10, name: "العاب", image: 'assets/gaming.png'),
+
+
+  ];
+
+}
+

@@ -93,7 +93,7 @@ return base64.decode(xc);
   Future<Uint8List> down_im(String IMGNM) async{
     mysqcon.Results res;
     res = await con!.query('SELECT * FROM `images_db` WHERE `name` LIKE \"'+ IMGNM +'%\"' );
-    var xres=   await Base64Codec().decode(res.elementAt(0).values.elementAt(1).toString() );
+    var xres=   await Base64Codec().decode(res.elementAt(0).values!.elementAt(1).toString() );
     return xres;
 
   }
